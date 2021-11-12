@@ -1,5 +1,0 @@
-FROM mongo:4.0
-WORKDIR /src
-COPY ./mongoinit.sh ./mongoinit.sh
-RUN chmod +x ./mongoinit.sh
-CMD ["./mongoinit.sh"]

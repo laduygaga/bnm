@@ -28,12 +28,45 @@ services:
       KAFKA_RESTART_DELAY: "5"
       ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: "0"
 
-  mongo:
-    image: mongo
-    container_name: mongo
+        # mongo:
+        #   image: mongo
+        #   container_name: mongo
+
+  mongo1:
+    hostname: mongo1
+    container_name: mongo1
+    image: mongo:4.2
+    expose:
+    - 27017
+    ports:
+      - 27011:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+  mongo2:
+    hostname: mongo2
+    container_name: mongo2
+    image: mongo:4.2
+    expose:
+    - 27017
+    ports:
+    - 27012:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+  mongo3:
+    hostname: mongo3
+    container_name: mongo3
+    image: mongo:4.2
+    expose:
+    - 27017
+    ports:
+    - 27013:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
 
   connect:
-    image: debezium/connect:1.6
+    image: debezium/connect:1.7
     ports:
       - 8083:8083
     environment:
@@ -44,4 +77,38 @@ services:
       - STATUS_STORAGE_TOPIC=my_connect_statuses
     depends_on:
       - "kafka"
-      - "mongo"
+      - "mongo1"
+      - "postgres"
+
+
+  postgres:
+    image: postgres:12.7
+    restart: "no"
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+        # command: ["sleep", "1000000"]
+    command: postgres -c wal_level=logical -c shared_buffers=256MB -c max_connections=200
+
+  adminer:
+    depends_on:
+      - postgres
+    image: adminer
+    restart: "no"
+    ports:
+      - 8080:8080
+
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    ports:
+     - "9200:9200"
+     - "9300:9300"
+    environment:
+     - http.host=0.0.0.0
+     - transport.host=127.0.0.1
+     - xpack.security.enabled=false
